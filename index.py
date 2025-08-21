@@ -14,11 +14,14 @@ import cv2
 from PIL import Image
 import io
 import base64
-
+import pytesseract
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+TESSERACT_PATH = '/usr/bin/tesseract'
+pytesseract.pytesseract.tesseract_cmd = TESSERACT_PATH
 
 app = Flask(__name__, static_folder='frontend/static', static_url_path='/static')
 CORS(app)
@@ -455,100 +458,145 @@ def create_response(status='success', message=None, data=None, error=None):
         
     return response
 
+# def check_tesseract():
+#     """Check Tesseract OCR availability"""
+#     global ocr_status
+
+#     try:        
+#         # Try common Tesseract paths on Windows
+#         possible_paths = [
+#             r'/usr/bin/tesseract',
+#             '/usr/bin/tesseract',
+#             r'C:\Program Files\Tesseract-OCR\tesseract.exe',
+#             r'C:\Program Files (x86)\Tesseract-OCR\tesseract.exe',
+#             'tesseract'  # If in PATH
+#         ]
+
+#         for path in possible_paths:
+#             try:
+#                 # For file paths, check if file exists
+#                 if path != 'tesseract':
+#                     if not os.path.exists(path):
+#                         logger.debug(f"Path not found: {path}")
+#                         continue
+#                     else:
+#                         logger.info(f"Found Tesseract at: {path}")
+
+#                 # Set the tesseract command path
+#                 pytesseract.pytesseract.tesseract_cmd = path
+
+#                 # Test if it works by getting version
+#                 version = pytesseract.get_tesseract_version()
+
+#                 # Test if it can actually process an image
+#                 from PIL import Image
+#                 import numpy as np
+
+#                 # Create a better test image for more reliable OCR test
+#                 test_img = Image.new('RGB', (200, 100), color='white')
+#                 from PIL import ImageDraw, ImageFont
+#                 draw = ImageDraw.Draw(test_img)
+
+#                 # Try to use a better font, fallback to default
+#                 try:
+#                     # Use default font with larger size
+#                     draw.text((20, 30), "TEST", fill='black')
+#                 except:
+#                     draw.text((20, 30), "TEST", fill='black')
+
+#                 # Try to extract text with better PSM mode
+#                 test_text = pytesseract.image_to_string(test_img, config='--psm 7 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+
+#                 # Get available languages
+#                 try:
+#                     languages = pytesseract.get_languages(config='')
+#                     lang_support = 'ind+eng' if 'ind' in languages and 'eng' in languages else 'eng'
+#                 except:
+#                     lang_support = 'eng'
+
+#                 ocr_status = {
+#                     'available': True,
+#                     'version': str(version),
+#                     'status': 'ready',
+#                     'path': path,
+#                     'languages': lang_support,
+#                     'supported_languages': languages if 'languages' in locals() else ['eng'],
+#                     'test_result': 'success'
+#                 }
+
+#                 logger.info(f"✅ Tesseract fully configured at: {path}")
+#                 logger.info(f"   Version: {version}")
+#                 logger.info(f"   Languages: {lang_support}")
+#                 logger.info(f"   Test extraction: {'PASS' if 'TEST' in test_text.upper() else 'PARTIAL'}")
+#                 return True
+
+#             except Exception as e:
+#                 logger.debug(f"Tesseract test failed at {path}: {e}")
+#                 continue
+        
+#         ocr_status = {
+#             'available': False,
+#             'version': None,
+#             'status': 'not_found',
+#             'error': 'Tesseract not found in common locations'
+#         }
+        
+#         logger.warning("⚠️ Tesseract not found")
+#         return False
+        
+#     except ImportError:
+#         ocr_status = {
+#             'available': False,
+#             'version': None,
+#             'status': 'not_installed',
+#             'error': 'pytesseract not installed'
+#         }
+#         logger.warning("⚠️ pytesseract not installed")
+#         return False
+
 def check_tesseract():
-    """Check Tesseract OCR availability"""
+    """
+    Checks Tesseract OCR availability in a Docker-friendly way.
+    It verifies the executable path and checks for required languages.
+    """
     global ocr_status
+    TESSERACT_PATH = '/usr/bin/tesseract'
 
     try:
-        import pytesseract
+        # 1. Set the path explicitly. This is the most crucial step.
+        pytesseract.pytesseract.tesseract_cmd = TESSERACT_PATH
+        
+        # 2. Verify it's executable by getting the version.
+        # This is a lightweight check and doesn't need PIL.
+        version = pytesseract.get_tesseract_version()
 
-        # Try common Tesseract paths on Windows
-        possible_paths = [
-            r'C:\Program Files\Tesseract-OCR\tesseract.exe',
-            r'C:\Program Files (x86)\Tesseract-OCR\tesseract.exe',
-            'tesseract'  # If in PATH
-        ]
-
-        for path in possible_paths:
-            try:
-                # For file paths, check if file exists
-                if path != 'tesseract':
-                    if not os.path.exists(path):
-                        logger.debug(f"Path not found: {path}")
-                        continue
-                    else:
-                        logger.info(f"Found Tesseract at: {path}")
-
-                # Set the tesseract command path
-                pytesseract.pytesseract.tesseract_cmd = path
-
-                # Test if it works by getting version
-                version = pytesseract.get_tesseract_version()
-
-                # Test if it can actually process an image
-                from PIL import Image
-                import numpy as np
-
-                # Create a better test image for more reliable OCR test
-                test_img = Image.new('RGB', (200, 100), color='white')
-                from PIL import ImageDraw, ImageFont
-                draw = ImageDraw.Draw(test_img)
-
-                # Try to use a better font, fallback to default
-                try:
-                    # Use default font with larger size
-                    draw.text((20, 30), "TEST", fill='black')
-                except:
-                    draw.text((20, 30), "TEST", fill='black')
-
-                # Try to extract text with better PSM mode
-                test_text = pytesseract.image_to_string(test_img, config='--psm 7 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ')
-
-                # Get available languages
-                try:
-                    languages = pytesseract.get_languages(config='')
-                    lang_support = 'ind+eng' if 'ind' in languages and 'eng' in languages else 'eng'
-                except:
-                    lang_support = 'eng'
-
-                ocr_status = {
-                    'available': True,
-                    'version': str(version),
-                    'status': 'ready',
-                    'path': path,
-                    'languages': lang_support,
-                    'supported_languages': languages if 'languages' in locals() else ['eng'],
-                    'test_result': 'success'
-                }
-
-                logger.info(f"✅ Tesseract fully configured at: {path}")
-                logger.info(f"   Version: {version}")
-                logger.info(f"   Languages: {lang_support}")
-                logger.info(f"   Test extraction: {'PASS' if 'TEST' in test_text.upper() else 'PARTIAL'}")
-                return True
-
-            except Exception as e:
-                logger.debug(f"Tesseract test failed at {path}: {e}")
-                continue
+        # 3. Check for available languages (sangat penting).
+        languages = pytesseract.get_languages()
+        lang_support = 'ind+eng' if 'ind' in languages and 'eng' in languages else 'eng'
         
         ocr_status = {
-            'available': False,
-            'version': None,
-            'status': 'not_found',
-            'error': 'Tesseract not found in common locations'
+            'available': True,
+            'version': str(version).strip(),
+            'path': TESSERACT_PATH,
+            'languages': lang_support,
+            'supported_languages': languages
         }
-        
-        logger.warning("⚠️ Tesseract not found")
+        logger.info(f"✅ Tesseract v{ocr_status['version']} configured successfully.")
+        logger.info(f"   Supported Languages: {ocr_status['supported_languages']}")
+        return True
+
+    except pytesseract.TesseractNotFoundError:
+        # This error is specific: the executable at the path was not found.
+        error_msg = f"Tesseract not found at the expected path '{TESSERACT_PATH}'."
+        logger.error(f"❌ {error_msg}")
+        ocr_status = {'available': False, 'error': error_msg}
         return False
-        
-    except ImportError:
-        ocr_status = {
-            'available': False,
-            'version': None,
-            'status': 'not_installed',
-            'error': 'pytesseract not installed'
-        }
-        logger.warning("⚠️ pytesseract not installed")
+    
+    except Exception as e:
+        # Catches any other unexpected errors during the check.
+        error_msg = f"An unexpected error occurred while checking Tesseract: {e}"
+        logger.error(f"❌ {error_msg}")
+        ocr_status = {'available': False, 'error': error_msg}
         return False
 
 def load_models():
@@ -974,10 +1022,10 @@ def extract_text():
                 logger.warning(f"Enhanced OCR failed: {e1}")
 
                 # Approach 2: Simple fallback OCR
-                try:
-                    import pytesseract
+                try:                    
                     # Set Tesseract path
                     tesseract_paths = [
+                        r'/usr/bin/tesseract',
                         '/usr/bin/tesseract',
                         r'C:\Program Files\Tesseract-OCR\tesseract.exe',
                         r'C:\Program Files (x86)\Tesseract-OCR\tesseract.exe',
@@ -2787,16 +2835,13 @@ def generate_recommendations(analysis_results):
         }]
 def extract_text_with_ocr(image):
     """Enhanced OCR extraction with debugging and multiple strategies"""
-    try:
-        import pytesseract
-        import numpy as np
-        from PIL import Image
-
+    try:                
         # Debug: Log image info
         logger.info(f"🔍 OCR Input - Image mode: {image.mode}, Size: {image.size}")
 
         # Set Tesseract path with better detection
         tesseract_paths = [
+            r'/usr/bin/tesseract',
             '/usr/bin/tesseract',
             r'C:\Program Files\Tesseract-OCR\tesseract.exe',
             r'C:\Program Files (x86)\Tesseract-OCR\tesseract.exe',
@@ -4218,6 +4263,8 @@ def internal_error(e):
         status='error',
         error='Internal server error'
     )), 500
+
+initialize_app()
 
 if __name__ == '__main__':
     print("🚀 Starting CekAjaYuk Backend...")
