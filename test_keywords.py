@@ -3,19 +3,19 @@
 Test script to check keyword counts
 """
 
-import backend_working
+import index
 
 print("✅ Backend loaded successfully!")
 print()
 print("📊 Keyword Analysis:")
-print(f"  - Legitimate indicators: {len(backend_working.INDONESIAN_KEYWORDS['legitimate_indicators'])} words")
-print(f"  - Suspicious indicators: {len(backend_working.INDONESIAN_KEYWORDS['suspicious_indicators'])} words") 
-print(f"  - Neutral keywords: {len(backend_working.INDONESIAN_KEYWORDS['neutral_keywords'])} words")
+print(f"  - Legitimate indicators: {len(index.INDONESIAN_KEYWORDS['legitimate_indicators'])} words")
+print(f"  - Suspicious indicators: {len(index.INDONESIAN_KEYWORDS['suspicious_indicators'])} words") 
+print(f"  - Neutral keywords: {len(index.INDONESIAN_KEYWORDS['neutral_keywords'])} words")
 
 total_keywords = (
-    len(backend_working.INDONESIAN_KEYWORDS['legitimate_indicators']) + 
-    len(backend_working.INDONESIAN_KEYWORDS['suspicious_indicators']) + 
-    len(backend_working.INDONESIAN_KEYWORDS['neutral_keywords'])
+    len(index.INDONESIAN_KEYWORDS['legitimate_indicators']) + 
+    len(index.INDONESIAN_KEYWORDS['suspicious_indicators']) + 
+    len(index.INDONESIAN_KEYWORDS['neutral_keywords'])
 )
 
 print(f"  - Total keywords: {total_keywords} words")

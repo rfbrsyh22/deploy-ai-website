@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  web: 
+    build: .
+    expose:
+      - "8000"
+    volumes:
+      - ./uploads:/app/uploads
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./frontend:/usr/share/nginx/html/frontend
+      - ./uploads:/var/www/uploads
+    depends_on:
+      - web

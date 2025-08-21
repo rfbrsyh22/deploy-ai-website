@@ -16,7 +16,6 @@ import io
 import base64
 
 
-
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -979,6 +978,7 @@ def extract_text():
                     import pytesseract
                     # Set Tesseract path
                     tesseract_paths = [
+                        '/usr/bin/tesseract',
                         r'C:\Program Files\Tesseract-OCR\tesseract.exe',
                         r'C:\Program Files (x86)\Tesseract-OCR\tesseract.exe',
                         'tesseract'
@@ -2797,6 +2797,7 @@ def extract_text_with_ocr(image):
 
         # Set Tesseract path with better detection
         tesseract_paths = [
+            '/usr/bin/tesseract',
             r'C:\Program Files\Tesseract-OCR\tesseract.exe',
             r'C:\Program Files (x86)\Tesseract-OCR\tesseract.exe',
             'tesseract'

@@ -22,7 +22,7 @@ warnings.filterwarnings('ignore')
 # Import OCR function from backend
 sys.path.append('.')
 try:
-    from backend_working import extract_text_with_ocr
+    from index import extract_text_with_ocr
     print("✅ OCR function imported successfully")
 
     # Test OCR setup
